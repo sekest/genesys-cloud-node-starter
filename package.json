@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "start": "node app.js",
-    "dev": "NODE_ENV=development node app.js"
+    "dev": "node app.js"
   },
   "keywords": [
     "oauth2",
