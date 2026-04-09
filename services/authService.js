@@ -1,5 +1,3 @@
-import axios from 'axios';
-
 const CLIENT_ID = process.env.GENESYS_CLOUD_CLIENT_ID;
 const CLIENT_SECRET = process.env.GENESYS_CLOUD_CLIENT_SECRET;
 const ENVIRONMENT = process.env.GENESYS_CLOUD_ENVIRONMENT;
@@ -44,27 +42,40 @@ export async function getAccessToken() {
 
     const basicAuth = Buffer.from(`${CLIENT_ID}:${CLIENT_SECRET}`).toString('base64');
 
-    const response = await axios.post(tokenUrl, body.toString(), {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
+
+    const response = await fetch(tokenUrl, {
+      method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
         Authorization: `Basic ${basicAuth}`
       },
-      timeout: 10000
+      body: body.toString(),
+      signal: controller.signal
     });
 
-    if (response.data.error) {
-      throw new Error(`OAuth error: ${response.data.error}`);
+    clearTimeout(timeout);
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${JSON.stringify(data)}`);
     }
 
-    if (!response.data.access_token) {
+    if (data.error) {
+      throw new Error(`OAuth error: ${data.error}`);
+    }
+
+    if (!data.access_token) {
       throw new Error('No access_token returned from token endpoint');
     }
 
-    const expiresIn = Number(response.data.expires_in) || 3600;
+    const expiresIn = Number(data.expires_in) || 3600;
     const bufferInSeconds = 60;
     const cacheSeconds = Math.max(expiresIn - bufferInSeconds, 30);
 
-    cachedAccessToken = response.data.access_token;
+    cachedAccessToken = data.access_token;
     tokenExpiresAt = Date.now() + cacheSeconds * 1000;
 
     console.log(`Fetched new access token. Cached for ${cacheSeconds} seconds.`);
@@ -73,12 +84,8 @@ export async function getAccessToken() {
   } catch (error) {
     console.error('--- OAuth Token Request Failed ---');
 
-    if (error.response) {
-      console.error('Status:', error.response.status);
-      console.error('Headers:', error.response.headers);
-      console.error('Body:', JSON.stringify(error.response.data, null, 2));
-    } else if (error.request) {
-      console.error('No response received:', error.request);
+    if (error.name === 'AbortError') {
+      console.error('Request timed out');
     } else {
       console.error('Error:', error.message);
     }

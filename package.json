@@ -1,7 +1,7 @@
 {
   "name": "genesys-cloud-node-starter",
   "version": "1.0.0",
-  "description": "Simple Node.js OAuth 2.0 Client Credentials demo using Express and Axios",
+  "description": "Simple Node.js OAuth 2.0 Client Credentials demo using Express",
   "main": "app.js",
   "type": "module",
   "scripts": {
@@ -12,13 +12,11 @@
     "oauth2",
     "client-credentials",
     "express",
-    "axios",
     "nodejs"
   ],
   "author": "Bluegill Technologies",
   "license": "MIT",
   "dependencies": {
-    "axios": "^1.13.6",
     "dotenv": "^17.3.1",
     "express": "^5.2.1"
   }

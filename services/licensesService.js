@@ -1,4 +1,3 @@
-import axios from 'axios';
 import { getAccessToken } from './authService.js';
 
 const ENVIRONMENT = process.env.GENESYS_CLOUD_ENVIRONMENT;
@@ -11,26 +10,40 @@ export async function getLicenses() {
   try {
     const token = await getAccessToken();
 
-    const response = await axios.get(
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
+
+    const response = await fetch(
       `https://api.${ENVIRONMENT}/api/v2/license/definitions`,
       {
+        method: 'GET',
         headers: {
           Authorization: `Bearer ${token}`
         },
-        timeout: 10000
+        signal: controller.signal
       }
     );
 
-    return response.data;
+    clearTimeout(timeout);
+
+    let data;
+    try {
+      data = await response.json();
+    } catch (e) {
+      data = null;
+    }
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${JSON.stringify(data)}`);
+    }
+
+    return data;
 
   } catch (error) {
     console.error('--- Licenses API Call Failed ---');
 
-    if (error.response) {
-      console.error('Status:', error.response.status);
-      console.error('Body:', JSON.stringify(error.response.data, null, 2));
-    } else if (error.request) {
-      console.error('No response received:', error.request);
+    if (error.name === 'AbortError') {
+      console.error('Request timed out');
     } else {
       console.error('Error:', error.message);
     }
