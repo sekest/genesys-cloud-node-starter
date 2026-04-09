@@ -1,34 +1,50 @@
 import 'dotenv/config';
-import express from 'express';
+import http from 'node:http';
 import { getLicenses } from './services/licensesService.js';
 
-const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(express.json());
+function sendJson(res, statusCode, payload) {
+  res.writeHead(statusCode, { 'Content-Type': 'application/json' });
+  res.end(JSON.stringify(payload));
+}
 
-app.get('/', (req, res) => {
-  res.send('Genesys Cloud middleware app is running.');
-});
+function sendText(res, statusCode, text) {
+  res.writeHead(statusCode, { 'Content-Type': 'text/plain' });
+  res.end(text);
+}
 
-app.get('/licenses', async (req, res) => {
-  try {
-    const data = await getLicenses();
+const server = http.createServer(async (req, res) => {
+  const requestUrl = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
 
-    res.json({
-      success: true,
-      data
-    });
-  } catch (error) {
-    console.error(error.message);
-
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
+  if (req.method === 'GET' && requestUrl.pathname === '/') {
+    sendText(res, 200, 'Genesys Cloud middleware app is running.');
+    return;
   }
+
+  if (req.method === 'GET' && requestUrl.pathname === '/licenses') {
+    try {
+      const data = await getLicenses();
+
+      sendJson(res, 200, {
+        success: true,
+        data
+      });
+    } catch (error) {
+      console.error(error.message);
+
+      sendJson(res, 500, {
+        success: false,
+        error: error.message
+      });
+    }
+
+    return;
+  }
+
+  sendText(res, 404, 'Not found');
 });
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });

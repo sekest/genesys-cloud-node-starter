@@ -1,11 +1,11 @@
 # Genesys Cloud Node Starter
 
-Small Express application that authenticates against Genesys Cloud with the OAuth 2.0 client credentials flow, caches the bearer token in memory, and exposes a local endpoint that proxies the Genesys Cloud license definitions API.
+Small Node.js application that authenticates against Genesys Cloud with the OAuth 2.0 client credentials flow, caches the bearer token in memory, and exposes a local endpoint that proxies the Genesys Cloud license definitions API.
 
 ## What This App Does
 
 - Loads configuration from `.env`
-- Starts an Express server
+- Starts a Node.js HTTP server
 - Requests an OAuth access token from `https://login.<environment>/oauth/token`
 - Reuses the token until shortly before expiration
 - Calls `https://api.<environment>/api/v2/license/definitions`
@@ -68,7 +68,7 @@ Example error shape:
 
 ### File Roles
 
-- `app.js`: Express bootstrap and route registration
+- `app.js`: HTTP server bootstrap and route registration
 - `services/authService.js`: OAuth token request, config validation, and in-memory token cache
 - `services/licensesService.js`: Authorized request to Genesys Cloud license definitions
 

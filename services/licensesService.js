@@ -7,47 +7,29 @@ if (!ENVIRONMENT) {
 }
 
 export async function getLicenses() {
-  try {
-    const token = await getAccessToken();
+  const token = await getAccessToken();
 
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 10000);
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10000);
 
-    const response = await fetch(
-      `https://api.${ENVIRONMENT}/api/v2/license/definitions`,
-      {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${token}`
-        },
-        signal: controller.signal
-      }
-    );
-
-    clearTimeout(timeout);
-
-    let data;
-    try {
-      data = await response.json();
-    } catch (e) {
-      data = null;
+  const response = await fetch(
+    `https://api.${ENVIRONMENT}/api/v2/license/definitions`,
+    {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`
+      },
+      signal: controller.signal
     }
+  );
 
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${JSON.stringify(data)}`);
-    }
+  clearTimeout(timeout);
 
-    return data;
+  const data = await response.json();
 
-  } catch (error) {
-    console.error('--- Licenses API Call Failed ---');
-
-    if (error.name === 'AbortError') {
-      console.error('Request timed out');
-    } else {
-      console.error('Error:', error.message);
-    }
-
-    throw new Error(`getLicenses failed: ${error.message}`);
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}: ${JSON.stringify(data)}`);
   }
+
+  return data;
 }
